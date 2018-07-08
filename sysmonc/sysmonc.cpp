@@ -14,6 +14,7 @@ usage(int argc, char **argv)
 {
     fprintf(stdout, "Usage: %s <options>\n", argv[0]);
     fprintf(stdout, "   getcpu: Get CPU from Node\n");
+    fprintf(stdout, "   getmem: Get MEM from Node\n");
 }
 
 int
@@ -42,10 +43,7 @@ main(int argc, char **argv)
     write(client_socket, buf, 1024);
 
     read(client_socket, buf, 1024);
-
-    if (strncmp(argv[1], "getcpu", 6) == 0) {
-        printf("%s", buf);
-    }
+    printf("%s", buf);
     close(client_socket);
     return 0;
 }

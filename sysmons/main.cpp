@@ -42,8 +42,12 @@ main(int argc, char **argv)
         } else if (strncmp(buf, "getcpu", 6) == 0) {
             char cpu_usage[1024];
             sprintf(cpu_usage, "CPU Usage: %lf\n", sysmon->GetCpuUsage());
-            std::cout << "write get cpu" << std::endl;
             write(client_socket, cpu_usage, 1024);
+        } else if (strncmp(buf, "getmem", 6) == 0) {
+            char mem_usage[1024];
+            sprintf(mem_usage, "MEM Usage: Use: %lu, Free: %lu, Total: %lu\n",
+                sysmon->GetUseMem(), sysmon->GetFreeMem(), sysmon->GetTotalMem());
+            write(client_socket, mem_usage, 1024);
         }
         close(client_socket);
     }

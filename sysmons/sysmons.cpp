@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/sysinfo.h>
 #include <iostream>
 #include <thread>
 #include <atomic>
@@ -23,8 +24,16 @@ typedef struct {
     long long unsigned    guest_nice; //time spent running a low priority virtual CPU for guest operating systems.
 } cpu_info_t;
 
-double cpu_usage;
+typedef struct {
+    double            cpu_usage;
+    unsigned long     free_mem;
+    unsigned long     total_mem;
+    unsigned long     use_mem;
+} res_info;
+
 std::atomic<int> is_running;
+
+res_info rinfo;
 
 uint32_t
 get_total_active_time(cpu_info_t *info)
@@ -81,16 +90,28 @@ get_cpu_info(void)
 }
 
 void
+set_memory_info(void)
+{
+    struct sysinfo info;
+    sysinfo(&info);
+
+    rinfo.total_mem = info.totalram;
+    rinfo.free_mem = info.freeram;
+    rinfo.use_mem = rinfo.total_mem - rinfo.free_mem;
+}
+
+void
 gather_thread(void *arg)
 {
     cpu_info_t  *info;
     uint32_t    total, active;
 
     while (is_running) {
+        set_memory_info();
         info = get_cpu_info();
         total = get_total_time(info);
         active = get_total_active_time(info);
-	    cpu_usage = 100.f * ((double)active / (double)total);
+	    rinfo.cpu_usage = 100.f * ((double)active / (double)total);
         //printf("CPU Usage: %lf\n", cpu_usage);
         sleep(1);
     }
@@ -109,5 +130,23 @@ Sysmon::~Sysmon() {
 double
 Sysmon::GetCpuUsage(void)
 {
-    return cpu_usage;   
+    return rinfo.cpu_usage;   
+}
+
+unsigned long
+Sysmon::GetFreeMem(void)
+{
+    return rinfo.free_mem;
+}
+
+unsigned long
+Sysmon::GetTotalMem(void)
+{
+    return rinfo.total_mem;
+}
+
+unsigned long
+Sysmon::GetUseMem(void)
+{
+    return rinfo.use_mem;
 }
