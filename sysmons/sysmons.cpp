@@ -1,8 +1,12 @@
-#include <stdio.h>
-#include <stdint.h>
-#include <string.h>
 #include <stdlib.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
 #include <unistd.h>
+#include <iostream>
+#include <thread>
+#include <atomic>
+#include "sysmons.h"
 
 #define STAT_SIZE 512
 
@@ -18,6 +22,9 @@ typedef struct {
     long long unsigned    guest; //time spent running a virtual CPU for guest operating systems.
     long long unsigned    guest_nice; //time spent running a low priority virtual CPU for guest operating systems.
 } cpu_info_t;
+
+double cpu_usage;
+std::atomic<int> is_running;
 
 uint32_t
 get_total_active_time(cpu_info_t *info)
@@ -73,18 +80,34 @@ get_cpu_info(void)
     return info;
 }
 
-int main(int argc, char **argv)
+void
+gather_thread(void *arg)
 {
     cpu_info_t  *info;
     uint32_t    total, active;
 
-    while (1) {
+    while (is_running) {
         info = get_cpu_info();
         total = get_total_time(info);
         active = get_total_active_time(info);
-
-        printf("CPU Usage: %lf\n", 100.f * ((double)active / (double)total));
+	    cpu_usage = 100.f * ((double)active / (double)total);
+        //printf("CPU Usage: %lf\n", cpu_usage);
         sleep(1);
     }
-    return 0;
+}
+
+Sysmon::Sysmon() {
+    is_running = 1;
+    g_thread= std::thread(gather_thread, nullptr);
+}
+
+Sysmon::~Sysmon() {
+    is_running = 0;
+    g_thread.join();
+}
+
+double
+Sysmon::GetCpuUsage(void)
+{
+    return cpu_usage;   
 }
