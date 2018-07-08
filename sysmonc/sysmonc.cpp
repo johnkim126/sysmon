@@ -9,12 +9,24 @@
 #include <stdlib.h>
 #include <iostream>
 
+void
+usage(int argc, char **argv)
+{
+    fprintf(stdout, "Usage: %s <options>\n", argv[0]);
+    fprintf(stdout, "   getcpu: Get CPU from Node\n");
+}
+
 int
 main(int argc, char **argv)
 {    
     int client_socket;
     int state;
     struct sockaddr_in addr;
+
+    if (argc <= 1) {
+        usage(argc, argv);
+        exit(1);
+    }
 
     client_socket = socket(AF_INET, SOCK_STREAM, 0);
     addr.sin_family = AF_INET;
@@ -26,18 +38,13 @@ main(int argc, char **argv)
     connect(client_socket, (struct sockaddr *)&addr, client_len);
     
     char buf[1024];
-    while (1) {
-        fgets(buf, 1024, stdin);
+    sprintf(buf, "%s", argv[1]);
+    write(client_socket, buf, 1024);
 
-        buf[1024 - 1] = '0';
-        write(client_socket, buf, 1024);
+    read(client_socket, buf, 1024);
 
-        if (strncmp(buf, "quit", 4) == 0) {
-            std::cout << "quit" << std::endl;
-            break;
-        }
-        read(client_socket, buf, 1024);
-        std::cout << "buf: "  << buf << std::endl;
+    if (strncmp(argv[1], "getcpu", 6) == 0) {
+        printf("%s", buf);
     }
     close(client_socket);
     return 0;
