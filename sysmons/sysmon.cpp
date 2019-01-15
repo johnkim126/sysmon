@@ -119,12 +119,10 @@ gather_thread(void *arg)
 
 Sysmon::Sysmon() {
     is_running = 1;
-    g_thread= std::thread(gather_thread, nullptr);
 }
 
 Sysmon::~Sysmon() {
     is_running = 0;
-    g_thread.join();
 }
 
 double

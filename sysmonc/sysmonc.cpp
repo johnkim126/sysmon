@@ -42,8 +42,8 @@ main(int argc, char **argv)
     sprintf(buf, "%s", argv[1]);
     write(client_socket, buf, 1024);
 
-    read(client_socket, buf, 1024);
-    printf("%s", buf);
+    //read(client_socket, buf, 1024);
+    //printf("%s", buf);
     close(client_socket);
     return 0;
 }
